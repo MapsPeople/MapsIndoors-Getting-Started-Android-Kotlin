@@ -19,6 +19,8 @@ internal class SearchItemAdapter(private val mLocations: List<MPLocation?>, priv
         holder.text.text = mLocations[position]?.name
         holder.itemView.setOnClickListener {
             mLocations[position]?.let { locations -> mMapActivity?.createRoute(locations) }
+            //Clearing map to remove the location filter from our search result
+            mMapActivity?.getMapControl()?.clearMap()
         }
         if (mMapActivity != null) {
             val locationDisplayRule: LocationDisplayRule? = mMapActivity.getMapControl().getDisplayRule(mLocations[position])
