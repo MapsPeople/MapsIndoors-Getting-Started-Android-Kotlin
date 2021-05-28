@@ -21,7 +21,7 @@ class RouteLegFragment : Fragment() {
         view: View, @Nullable savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //Assigning views
-        val fromTxtView = view.findViewById<TextView>(R.id.from_text_view)
+        val stepsTxtView = view.findViewById<TextView>(R.id.steps_text_view)
         var stepsString = ""
         //A loop to write what to do for each step of the leg.
         for (i in mRouteLeg!!.steps.indices) {
@@ -31,7 +31,7 @@ class RouteLegFragment : Fragment() {
                 """.trimIndent()
         }
 
-        fromTxtView.text = stepsString
+        stepsTxtView.text = stepsString
     }
 
     companion object {

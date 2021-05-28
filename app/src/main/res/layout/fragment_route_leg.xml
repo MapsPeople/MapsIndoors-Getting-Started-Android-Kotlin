@@ -5,10 +5,11 @@
     android:layout_height="wrap_content"
     tools:context=".RouteLegFragment">
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/from_text_view"
+        android:id="@+id/steps_text_view"
         android:layout_margin="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textStyle="bold"/>
 </RelativeLayout>

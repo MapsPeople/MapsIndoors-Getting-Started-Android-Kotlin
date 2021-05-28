@@ -51,9 +51,8 @@ class NavigationFragment : Fragment() {
 
         //Button for closing the bottom sheet. Clears the route through directionsRenderer as well, and changes map padding.
         closeBtn.setOnClickListener {
-            mMapsActivity!!.supportFragmentManager.beginTransaction().remove(this).commit()
+            mMapsActivity!!.removeFragmentFromBottomSheet(this)
             mMapsActivity!!.getMpDirectionsRenderer()?.clear()
-            mMapsActivity!!.getMapControl().setMapPadding(0, 0, 0, 0)
         }
 
         //Next button for going through the legs of the route.

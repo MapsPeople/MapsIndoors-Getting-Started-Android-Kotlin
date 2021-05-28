@@ -29,9 +29,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private lateinit var mMapControl: MapControl
     private lateinit var mSearchFragment: SearchFragment
     private lateinit var mNavigationFragment: NavigationFragment
-    private lateinit var btmnSheetBehavior: BottomSheetBehavior<FrameLayout>
+    private lateinit var mBtmnSheetBehavior: BottomSheetBehavior<FrameLayout>
     private lateinit var mSearchTxtField: TextInputEditText
-    private var currentFragment: Fragment? = null
+    private var mCurrentFragment: Fragment? = null
     private val mUserLocation: Point = Point(38.897389429704695, -77.03740973527613, 0.0)
 
     private var mpDirectionsRenderer: MPDirectionsRenderer? = null
@@ -82,24 +82,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         }
 
         var bottomSheet = findViewById<FrameLayout>(R.id.standardBottomSheet)
-        btmnSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-        btmnSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
+        mBtmnSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+        mBtmnSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    if (currentFragment != null) {
-                        if (currentFragment is NavigationFragment) {
+                    if (mCurrentFragment != null) {
+                        if (mCurrentFragment is NavigationFragment) {
                             //Clears the direction view if the navigation fragment is closed.
                             mpDirectionsRenderer?.clear()
                         }
                         //Clears the map if any searches has been done.
                         mMapControl.clearMap()
                         //Removes the current fragment from the BottomSheet.
-                        supportFragmentManager.beginTransaction().remove(currentFragment!!).commit()
-                        currentFragment = null
+                        removeFragmentFromBottomSheet(mCurrentFragment!!)
                     }
-                    mMapControl.setMapPadding(0, 0, 0, 0)
-                } else {
-                    mMapControl.setMapPadding(0, 0, 0, btmnSheetBehavior.peekHeight)
                 }
             }
 
@@ -108,15 +104,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
 
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
@@ -156,14 +143,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                 //Create a new instance of the search fragment
                 mSearchFragment = SearchFragment.newInstance(list, this)
                 //Make a transaction to the bottom sheet
-                supportFragmentManager.beginTransaction().replace(R.id.standardBottomSheet, mSearchFragment).commit()
-                //Set the map padding to the height of the bottom sheets peek height. To not obfuscate the google logo.
-                mMapControl.setMapPadding(0, 0, 0, btmnSheetBehavior.peekHeight)
-                if (btmnSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
-                    btmnSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-                }
-                //Assign search fragment to current fragment for ui logic
-                currentFragment = mSearchFragment
+                addFragmentToBottomSheet(mSearchFragment)
                 //Clear the search text, since we got a result
                 mSearchTxtField.text?.clear()
                 //Calling displaySearch results on the ui thread as camera movement is involved
@@ -205,7 +185,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
             mpRoutingProvider = MPRoutingProvider()
             mpRoutingProvider?.setOnRouteResultListener(this)
         }
-        mpRoutingProvider?.setTravelMode(TravelMode.WALKING)
         //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
         mpRoutingProvider?.query(mUserLocation, mpLocation.point)
     }
@@ -234,19 +213,34 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         //Create a new instance of the navigation fragment
         mNavigationFragment = NavigationFragment.newInstance(route, this)
         //Start a transaction and assign it to the BottomSheet
-        supportFragmentManager.beginTransaction().replace(R.id.standardBottomSheet, mNavigationFragment).commit()
-        if (btmnSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
-            btmnSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        }
-        //Assign the navigation fragment to current fragment. To handle ui logic
-        currentFragment = mNavigationFragment
+        addFragmentToBottomSheet(mNavigationFragment)
         //As camera movement is involved run this on the UIThread
         runOnUiThread {
             //Starts drawing and adjusting the map according to the route
             mpDirectionsRenderer?.initMap(true)
-            mMapControl.setMapPadding(0, 0, 0, btmnSheetBehavior.peekHeight)
         }
     }
 
+    fun addFragmentToBottomSheet(newFragment: Fragment) {
+        if (mCurrentFragment != null) {
+            supportFragmentManager.beginTransaction().remove(mCurrentFragment!!).commit()
+        }
+        supportFragmentManager.beginTransaction().replace(R.id.standardBottomSheet, newFragment).commit()
+        mCurrentFragment = newFragment
+        //Set the map padding to the height of the bottom sheets peek height. To not obfuscate the google logo.
+        runOnUiThread {
+            mMapControl.setMapPadding(0, 0, 0, mBtmnSheetBehavior.peekHeight)
+            if (mBtmnSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+                mBtmnSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+            }
+        }
+    }
 
+    fun removeFragmentFromBottomSheet(fragment: Fragment) {
+        if (mCurrentFragment == fragment) {
+            mCurrentFragment = null
+        }
+        supportFragmentManager.beginTransaction().remove(fragment).commit()
+        runOnUiThread { mMapControl.setMapPadding(0, 0, 0, 0) }
+    }
 }
