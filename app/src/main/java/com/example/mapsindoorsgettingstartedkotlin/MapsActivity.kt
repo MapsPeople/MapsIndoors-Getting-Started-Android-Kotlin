@@ -18,6 +18,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.textfield.TextInputEditText
+import com.mapsindoors.livesdk.LiveDataDomainTypes
 import com.mapsindoors.mapssdk.*
 import com.mapsindoors.mapssdk.errors.MIError
 
@@ -46,7 +47,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        MapsIndoors.initialize(applicationContext, "79f8e7daff76489dace4f9f9")
+        MapsIndoors.initialize(applicationContext, "d876ff0e60bb430b8fabb145")
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key))
 
         mapFragment.view?.let {
@@ -115,6 +116,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private fun initMapControl(view: View) {
         //Creates a new instance of MapControl
         mMapControl = MapControl(this)
+        //Enable live data on the map
+        enableLiveData()
         //Sets the Google map object and the map view to the MapControl
         mMapControl.setGoogleMap(mMap, view)
         mMapControl.init { miError ->
@@ -219,6 +222,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
             //Starts drawing and adjusting the map according to the route
             mpDirectionsRenderer?.initMap(true)
         }
+    }
+
+    /**
+     * Enables live data for the map.
+     */
+    private fun enableLiveData() {
+        //Enabling live data for the three known live data domains that are enabled for this solution.
+        mMapControl.enableLiveData(LiveDataDomainTypes.AVAILABILITY_DOMAIN)
+        mMapControl.enableLiveData(LiveDataDomainTypes.OCCUPANCY_DOMAIN)
+        mMapControl.enableLiveData(LiveDataDomainTypes.POSITION_DOMAIN)
     }
 
     fun addFragmentToBottomSheet(newFragment: Fragment) {
