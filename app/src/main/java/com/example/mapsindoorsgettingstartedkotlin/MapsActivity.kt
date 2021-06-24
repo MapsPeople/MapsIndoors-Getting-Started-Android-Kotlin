@@ -116,7 +116,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private fun initMapControl(view: View) {
         //Creates a new instance of MapControl
         mMapControl = MapControl(this)
-        //Enable live data on the map
+        //Enable Live Data on the map
         enableLiveData()
         //Sets the Google map object and the map view to the MapControl
         mMapControl.setGoogleMap(mMap, view)
@@ -228,7 +228,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
      * Enables live data for the map.
      */
     private fun enableLiveData() {
-        //Enabling live data for the three known live data domains that are enabled for this solution.
+        //Enabling Live Data for the three known Live Data Domains enabled for this Solution.
         mMapControl.enableLiveData(LiveDataDomainTypes.AVAILABILITY_DOMAIN)
         mMapControl.enableLiveData(LiveDataDomainTypes.OCCUPANCY_DOMAIN)
         mMapControl.enableLiveData(LiveDataDomainTypes.POSITION_DOMAIN)
