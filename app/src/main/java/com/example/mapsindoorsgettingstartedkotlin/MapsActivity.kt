@@ -1,6 +1,7 @@
 package com.example.mapsindoorsgettingstartedkotlin
 
 import android.app.Activity
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
@@ -33,10 +34,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private lateinit var mBtmnSheetBehavior: BottomSheetBehavior<FrameLayout>
     private lateinit var mSearchTxtField: TextInputEditText
     private var mCurrentFragment: Fragment? = null
-    private val mUserLocation: Point = Point(38.897389429704695, -77.03740973527613, 0.0)
+    private val mUserLocation: MPPoint = MPPoint(38.897389429704695, -77.03740973527613, 0.0)
 
     private var mpDirectionsRenderer: MPDirectionsRenderer? = null
-    private var mpRoutingProvider: MPRoutingProvider? = null
+    private var mpDirectionsService: MPDirectionsService? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +48,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        MapsIndoors.initialize(applicationContext, "d876ff0e60bb430b8fabb145")
+        //Initialize MapsIndoors and set the google api Key, we do not need a listener in this showcase
+        MapsIndoors.initialize(applicationContext, "d876ff0e60bb430b8fabb145", null)
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key))
 
         mapFragment.view?.let {
@@ -72,7 +74,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         }
 
         //ClickListener to start a search, when the user clicks the search button
-        var searchBtn = findViewById<ImageButton>(R.id.search_btn)
+        val searchBtn = findViewById<ImageButton>(R.id.search_btn)
         searchBtn.setOnClickListener {
             if (mSearchTxtField.text?.length != 0) {
                 //There is text inside the search field. So lets do the search.
@@ -82,7 +84,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
             imm.hideSoftInputFromWindow(it.windowToken, 0)
         }
 
-        var bottomSheet = findViewById<FrameLayout>(R.id.standardBottomSheet)
+        val bottomSheet = findViewById<FrameLayout>(R.id.standardBottomSheet)
         mBtmnSheetBehavior = BottomSheetBehavior.from(bottomSheet)
         mBtmnSheetBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
@@ -93,7 +95,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                             mpDirectionsRenderer?.clear()
                         }
                         //Clears the map if any searches has been done.
-                        mMapControl.clearMap()
+                        mMapControl.clearFilter()
                         //Removes the current fragment from the BottomSheet.
                         removeFragmentFromBottomSheet(mCurrentFragment!!)
                     }
@@ -108,28 +110,36 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        mapView?.let { view ->
-            initMapControl(view)
-        }
+        initMapControl(mapView)
     }
 
     private fun initMapControl(view: View) {
-        //Creates a new instance of MapControl
-        mMapControl = MapControl(this)
-        //Enable live data on the map
-        enableLiveData()
-        //Sets the Google map object and the map view to the MapControl
-        mMapControl.setGoogleMap(mMap, view)
-        mMapControl.init { miError ->
-            if (miError == null) {
-                //No errors so getting the first venue (in the white house solution the only one)
-                val venue = MapsIndoors.getVenues()?.currentVenue
+        //Sets the Google map object and the map view to the MapControl with a configuration
+        val mapConfig = MPMapConfig.Builder(this, mMap, view).build() as MPMapConfig
 
-                runOnUiThread {
-                    //Animates the camera to fit the new venue
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue?.latLngBoundingBox, 19));
-                }
+        //Creates a new instance of MapControl
+        MapControl.create(mapConfig, this::onMapControlReady)
+    }
+
+
+    private fun onMapControlReady(mapControl: MapControl, miError: MIError?) {
+        if (miError == null) {
+            // Sets the local MapControl var so that it can be used later
+            mMapControl = mapControl
+            //No errors so getting the first venue (in the white house solution the only one)
+            val venue = MapsIndoors.getVenues()?.currentVenue
+
+            runOnUiThread {
+                //Animates the camera to fit the new venue
+                mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngBounds(
+                        venue?.latLngBoundingBox,
+                        19
+                    )
+                )
             }
+            //Enable live data on the map
+            enableLiveData()
         }
     }
 
@@ -140,7 +150,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         val mpFilter = MPFilter.Builder().setTake(30).build()
 
         //Gets locations
-        MapsIndoors.getLocationsAsync(mpQuery, mpFilter) { list: List<MPLocation?>?, miError: MIError? ->
+        MapsIndoors.getLocationsAsync(
+            mpQuery,
+            mpFilter
+        ) { list: List<MPLocation?>?, miError: MIError? ->
             //Check if there is no error and the list is not empty
             if (miError == null && !list.isNullOrEmpty()) {
                 //Create a new instance of the search fragment
@@ -149,14 +162,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                 addFragmentToBottomSheet(mSearchFragment)
                 //Clear the search text, since we got a result
                 mSearchTxtField.text?.clear()
+
+                val filterBehavior =
+                    MPFilterBehavior.Builder().setMoveCamera(true).setAnimationDuration(500).build()
                 //Calling displaySearch results on the ui thread as camera movement is involved
-                runOnUiThread { mMapControl.displaySearchResults(list, true) }
+                runOnUiThread { mMapControl.setFilter(list, filterBehavior) }
             } else {
                 val alertDialogTitleTxt: String
                 val alertDialogTxt: String
                 if (list!!.isEmpty()) {
                     alertDialogTitleTxt = "No results found"
-                    alertDialogTxt = "No results could be found for your search text. Try something else"
+                    alertDialogTxt =
+                        "No results could be found for your search text. Try something else"
                 } else {
                     if (miError != null) {
                         alertDialogTitleTxt = "Error: " + miError.code
@@ -167,29 +184,48 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                     }
                 }
                 AlertDialog.Builder(this)
-                        .setTitle(alertDialogTitleTxt)
-                        .setMessage(alertDialogTxt)
-                        .show()
+                    .setTitle(alertDialogTitleTxt)
+                    .setMessage(alertDialogTxt)
+                    .show()
             }
         }
     }
 
+    /**
+     * Getter for the MapControl object
+     *
+     * @return MapControl object for this activity
+     */
     fun getMapControl(): MapControl {
         return mMapControl
     }
 
+    /**
+     * Getter for the MPDirectionsRenderer object
+     *
+     * @return MPDirectionRenderer object for this activity
+     */
     fun getMpDirectionsRenderer(): MPDirectionsRenderer? {
         return mpDirectionsRenderer
     }
 
+    /**
+     * Queries the MPRouting provider with a hardcoded user location and the location the user should be routed to
+     *
+     * @param mpLocation A MPLocation to navigate to
+     */
     fun createRoute(mpLocation: MPLocation) {
         //If MPRoutingProvider has not been instantiated create it here and assign the results call back to the activity.
-        if (mpRoutingProvider == null) {
-            mpRoutingProvider = MPRoutingProvider()
-            mpRoutingProvider?.setOnRouteResultListener(this)
+        if (mpDirectionsService == null) {
+            //Creating a configuration for the MPDirectionsService allows us to set a resultListener and a travelMode.
+            val directionsConfig = MPDirectionsConfig.Builder()
+                .setOnRouteResultListener(this::onRouteResult)
+                .setTravelMode(MPTravelMode.WALKING).build()
+
+            mpDirectionsService = MPDirectionsService(directionsConfig)
         }
         //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
-        mpRoutingProvider?.query(mUserLocation, mpLocation.point)
+        mpDirectionsService?.query(mUserLocation, mpLocation.point)
     }
 
     /**
@@ -197,19 +233,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
      * @param route the route model used to render a navigation view.
      * @param miError an MIError if anything goes wrong when generating a route
      */
-    override fun onRouteResult(@Nullable route: Route?, @Nullable miError: MIError?) {
+    override fun onRouteResult(@Nullable route: MPRoute?, @Nullable miError: MIError?) {
         //Return if either error is not null or the route is null
         if (miError != null || route == null) {
-            //TODO: Tell the user about the route not being able to be created etc.
+            android.app.AlertDialog.Builder(this)
+                .setTitle("Something went wrong")
+                .setMessage("Something went wrong when generating the route. Try again or change your destination/origin")
+                .show()
             return
         }
         //Create the MPDirectionsRenderer if it has not been instantiated.
         if (mpDirectionsRenderer == null) {
-            mpDirectionsRenderer = MPDirectionsRenderer(this, mMap, mMapControl, OnLegSelectedListener { i: Int ->
-                //Listener call back for when the user changes route leg. (By default is only called when a user presses the RouteLegs end marker)
-                mpDirectionsRenderer?.setRouteLegIndex(i)
-                mMapControl.selectFloor(mpDirectionsRenderer!!.currentFloor)
-            })
+            mpDirectionsRenderer =
+                MPDirectionsRenderer(this, mMap, mMapControl, OnLegSelectedListener { i: Int ->
+                    //Listener call back for when the user changes route leg. (By default is only called when a user presses the RouteLegs end marker)
+                    mpDirectionsRenderer?.setRouteLegIndex(i)
+                    mMapControl.selectFloor(mpDirectionsRenderer!!.legFloorIndex)
+                })
         }
         //Set the route on the Directions renderer
         mpDirectionsRenderer?.setRoute(route)
@@ -220,7 +260,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         //As camera movement is involved run this on the UIThread
         runOnUiThread {
             //Starts drawing and adjusting the map according to the route
-            mpDirectionsRenderer?.initMap(true)
+            mpDirectionsRenderer?.renderOnMap()
         }
     }
 
@@ -238,7 +278,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         if (mCurrentFragment != null) {
             supportFragmentManager.beginTransaction().remove(mCurrentFragment!!).commit()
         }
-        supportFragmentManager.beginTransaction().replace(R.id.standardBottomSheet, newFragment).commit()
+        supportFragmentManager.beginTransaction().replace(R.id.standardBottomSheet, newFragment)
+            .commit()
         mCurrentFragment = newFragment
         //Set the map padding to the height of the bottom sheets peek height. To not obfuscate the google logo.
         runOnUiThread {

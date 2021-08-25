@@ -5,11 +5,14 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.mapsindoors.mapssdk.LocationDisplayRule
 import com.mapsindoors.mapssdk.MPLocation
+import com.mapsindoors.mapssdk.MPLocationDisplayRule
 
 
-internal class SearchItemAdapter(private val mLocations: List<MPLocation?>, private val mMapActivity: MapsActivity?) : RecyclerView.Adapter<ViewHolder>() {
+internal class SearchItemAdapter(
+    private val mLocations: List<MPLocation?>,
+    private val mMapActivity: MapsActivity?
+) : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context), parent)
@@ -20,10 +23,11 @@ internal class SearchItemAdapter(private val mLocations: List<MPLocation?>, priv
         holder.itemView.setOnClickListener {
             mLocations[position]?.let { locations -> mMapActivity?.createRoute(locations) }
             //Clearing map to remove the location filter from our search result
-            mMapActivity?.getMapControl()?.clearMap()
+            mMapActivity?.getMapControl()?.clearFilter()
         }
         if (mMapActivity != null) {
-            val locationDisplayRule: LocationDisplayRule? = mMapActivity.getMapControl().getDisplayRule(mLocations[position])
+            val locationDisplayRule: MPLocationDisplayRule? =
+                mMapActivity.getMapControl().getDisplayRule(mLocations[position])
             if (locationDisplayRule != null && locationDisplayRule.icon != null) {
                 mMapActivity.runOnUiThread(Runnable {
                     holder.imageView.setImageBitmap(
@@ -32,7 +36,8 @@ internal class SearchItemAdapter(private val mLocations: List<MPLocation?>, priv
                 })
             } else {
                 //Location does not have a special displayRule using type Display rule
-                val typeDisplayRule: LocationDisplayRule? = mMapActivity.getMapControl().getDisplayRule(mLocations[position]?.type)
+                val typeDisplayRule: MPLocationDisplayRule? =
+                    mMapActivity.getMapControl().getDisplayRule(mLocations[position]?.type)
                 if (typeDisplayRule != null) {
                     mMapActivity.runOnUiThread(Runnable {
                         holder.imageView.setImageBitmap(

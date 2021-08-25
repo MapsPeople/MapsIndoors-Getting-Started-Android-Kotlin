@@ -12,15 +12,19 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback
-import com.mapsindoors.mapssdk.Route
+import com.mapsindoors.mapssdk.MPRoute
 import java.util.concurrent.TimeUnit
 
 class NavigationFragment : Fragment() {
-    private var mRoute: Route? = null
+    private var mRoute: MPRoute? = null
     private var mMapsActivity: MapsActivity? = null
 
     @Nullable
-    override fun onCreateView(inflater: LayoutInflater, @Nullable container: ViewGroup?, @Nullable savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        @Nullable container: ViewGroup?,
+        @Nullable savedInstanceState: Bundle?
+    ): View {
         return inflater.inflate(R.layout.fragment_navigation, container, false)
     }
 
@@ -36,7 +40,7 @@ class NavigationFragment : Fragment() {
                 //When a page is selected call the renderer with the index
                 mMapsActivity?.getMpDirectionsRenderer()?.setRouteLegIndex(position)
                 //Update the floor on mapcontrol if the floor might have changed for the routing
-                mMapsActivity?.getMpDirectionsRenderer()?.currentFloor?.let {floorIndex ->
+                mMapsActivity?.getMpDirectionsRenderer()?.legFloorIndex?.let { floorIndex ->
                     mMapsActivity?.getMapControl()?.selectFloor(floorIndex)
                 }
             }
@@ -74,7 +78,7 @@ class NavigationFragment : Fragment() {
         //Describing the distance in meters
         distanceTxtView.text = "Distance: " + mRoute?.getDistance().toString() + " m"
         //Describing the time it takes for the route in minutes
-        infoTxtView.text = "Time for route: " + mRoute?.duration?.toLong()?.let {duration ->
+        infoTxtView.text = "Time for route: " + mRoute?.duration?.toLong()?.let { duration ->
             TimeUnit.MINUTES.convert(duration, TimeUnit.SECONDS).toString()
         } + " minutes"
     }
@@ -86,7 +90,7 @@ class NavigationFragment : Fragment() {
         }
 
         override fun getItemCount(): Int {
-            mRoute?.legs?.let { legs->
+            mRoute?.legs?.let { legs ->
                 return legs.size
             }
             return 0
@@ -94,7 +98,7 @@ class NavigationFragment : Fragment() {
     }
 
     companion object {
-        fun newInstance(route: Route?, mapsActivity: MapsActivity?): NavigationFragment {
+        fun newInstance(route: MPRoute?, mapsActivity: MapsActivity?): NavigationFragment {
             val fragment = NavigationFragment()
             fragment.mRoute = route
             fragment.mMapsActivity = mapsActivity
