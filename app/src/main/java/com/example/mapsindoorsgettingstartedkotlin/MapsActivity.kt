@@ -150,10 +150,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         val mpFilter = MPFilter.Builder().setTake(30).build()
 
         //Gets locations
-        MapsIndoors.getLocationsAsync(
-            mpQuery,
-            mpFilter
-        ) { list: List<MPLocation?>?, miError: MIError? ->
+        MapsIndoors.getLocationsAsync(mpQuery, mpFilter) {
+                list: List<MPLocation?>?, miError: MIError? ->
             //Check if there is no error and the list is not empty
             if (miError == null && !list.isNullOrEmpty()) {
                 //Create a new instance of the search fragment
@@ -222,7 +220,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
                 .setOnRouteResultListener(this::onRouteResult)
                 .setTravelMode(MPTravelMode.WALKING).build()
 
-            mpDirectionsService = MPDirectionsService(directionsConfig)
+            mpDirectionsService = MPDirectionsService()
+            mpDirectionsService!!.setConfig(directionsConfig)
         }
         //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
         mpDirectionsService?.query(mUserLocation, mpLocation.point)
