@@ -29,6 +29,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private lateinit var mapView: View
     private lateinit var mMapControl: MapControl
     private lateinit var mSearchFragment: SearchFragment
+    private lateinit var mMenuFragment: MenuFragment
     private lateinit var mNavigationFragment: NavigationFragment
     private lateinit var mBtmnSheetBehavior: BottomSheetBehavior<FrameLayout>
     private lateinit var mSearchTxtField: TextInputEditText
@@ -74,12 +75,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         //ClickListener to start a search, when the user clicks the search button
         var searchBtn = findViewById<ImageButton>(R.id.search_btn)
         searchBtn.setOnClickListener {
+            /*
             if (mSearchTxtField.text?.length != 0) {
                 //There is text inside the search field. So lets do the search.
                 search(mSearchTxtField.text.toString())
             }
             //Making sure keyboard is closed.
             imm.hideSoftInputFromWindow(it.windowToken, 0)
+             */
+
+            // Lets hijack the searchbutton
+            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig()!!.getMenuInfo("mainmenu"), this)
+            //Make a transaction to the bottomsheet
+            addFragmentToBottomSheet(mMenuFragment)
         }
 
         var bottomSheet = findViewById<FrameLayout>(R.id.standardBottomSheet)
