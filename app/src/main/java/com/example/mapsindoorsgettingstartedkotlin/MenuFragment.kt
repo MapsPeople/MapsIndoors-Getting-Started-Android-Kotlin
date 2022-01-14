@@ -12,10 +12,9 @@ import com.mapsindoors.mapssdk.MenuInfo
 class MenuFragment : Fragment() {
     private var mMenuInfos: List<MenuInfo?>? = null
     private var mMapActivity: MapsActivity? = null
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         // For the brevity of this guide, we will reuse the bottom sheet used in the searchFragment
         return inflater.inflate(R.layout.fragment_search, container, false)
     }
@@ -26,11 +25,8 @@ class MenuFragment : Fragment() {
         recyclerView.adapter = mMenuInfos?.let { menuInfos -> MenuItemAdapter(menuInfos, mMapActivity) }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onDestroyView() {
+        // When we close the menu fragment we want to display all locations again, not just whichever were selected last
         mMapActivity?.getMapControl()?.clearMap()
         super.onDestroyView()
     }
