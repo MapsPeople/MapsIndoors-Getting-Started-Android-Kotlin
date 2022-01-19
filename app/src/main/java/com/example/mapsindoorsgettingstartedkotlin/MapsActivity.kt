@@ -85,7 +85,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
              */
 
             // Lets hijack the searchbutton
-            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig()!!.getMenuInfo("mainmenu"), this)
+            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig()?.getMenuInfo("mainmenu")!!, this)
             //Make a transaction to the bottomsheet
             addFragmentToBottomSheet(mMenuFragment)
         }

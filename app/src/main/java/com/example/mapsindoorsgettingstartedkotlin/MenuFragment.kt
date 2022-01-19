@@ -10,8 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mapsindoors.mapssdk.MenuInfo
 
 class MenuFragment : Fragment() {
-    private var mMenuInfos: List<MenuInfo?>? = null
-    private var mMapActivity: MapsActivity? = null
+    private lateinit var mMenuInfos: List<MenuInfo?>
+    private lateinit var mMapActivity: MapsActivity
 
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -22,17 +22,17 @@ class MenuFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = view as RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = mMenuInfos?.let { menuInfos -> MenuItemAdapter(menuInfos, mMapActivity) }
+        recyclerView.adapter = MenuItemAdapter(mMenuInfos, mMapActivity)
     }
 
     override fun onDestroyView() {
         // When we close the menu fragment we want to display all locations again, not just whichever were selected last
-        mMapActivity?.getMapControl()?.clearMap()
+        mMapActivity.getMapControl().clearMap()
         super.onDestroyView()
     }
 
     companion object {
-        fun newInstance(menuInfos: List<MenuInfo?>?, mapsActivity: MapsActivity?): MenuFragment {
+        fun newInstance(menuInfos: List<MenuInfo?>, mapsActivity: MapsActivity): MenuFragment {
             val fragment = MenuFragment()
             fragment.mMenuInfos = menuInfos
             fragment.mMapActivity = mapsActivity

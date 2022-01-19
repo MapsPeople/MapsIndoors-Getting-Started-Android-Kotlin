@@ -40,8 +40,8 @@ internal class MenuItemAdapter(
             MapsIndoors.getLocationsAsync(
                 query, filter
             ) { locations: List<MPLocation?>?, error: MIError? ->
-                if (error == null) {
-                    mMapActivity!!.getMapControl().displaySearchResults(locations!!)
+                if (error == null && locations != null) {
+                    mMapActivity?.getMapControl()?.displaySearchResults(locations)
                 }
             }
         }
