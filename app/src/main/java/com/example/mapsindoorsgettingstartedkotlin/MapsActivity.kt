@@ -32,6 +32,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
     private lateinit var mNavigationFragment: NavigationFragment
     private lateinit var mBtmnSheetBehavior: BottomSheetBehavior<FrameLayout>
     private lateinit var mSearchTxtField: TextInputEditText
+    private lateinit var mSelectedLocation: MPLocation
     private var mCurrentFragment: Fragment? = null
     private val mUserLocation: Point = Point(38.897389429704695, -77.03740973527613, 0.0)
 
@@ -189,6 +190,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
             mpRoutingProvider?.setOnRouteResultListener(this)
         }
         //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
+        mSelectedLocation = mpLocation
         mpRoutingProvider?.query(mUserLocation, mpLocation.point)
     }
 
@@ -214,7 +216,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, OnRouteResultListe
         //Set the route on the Directions renderer
         mpDirectionsRenderer?.setRoute(route)
         //Create a new instance of the navigation fragment
-        mNavigationFragment = NavigationFragment.newInstance(route, this)
+        mNavigationFragment = NavigationFragment.newInstance(route, this, mSelectedLocation)
         //Start a transaction and assign it to the BottomSheet
         addFragmentToBottomSheet(mNavigationFragment)
         //As camera movement is involved run this on the UIThread
